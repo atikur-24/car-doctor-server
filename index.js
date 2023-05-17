@@ -28,7 +28,7 @@ async function run() {
 
     const database = client.db('carDoctor');
     const serviceCollection = database.collection('services');
-    const OrdersCollection = database.collection('orders');
+    const ordersCollection = database.collection('orders');
 
     // services routes
     app.get('/services', async(req, res) => {
@@ -47,13 +47,41 @@ async function run() {
       res.send(result);
     });
 
-    //orders
-    app.post('/checkout', async(req, res) => {
-      const orders = req.body;
-      const result = await OrdersCollection.insertOne(orders);
+    //orders route
+    app.get('/orders', async(req, res) => {
+      let query = {};
+      if (req.query?.email) {
+          query = { email: req.query.email }
+      }
+      const result = await ordersCollection.find(query).toArray();
       res.send(result)
-    })
+    });
 
+    app.post('/orders', async(req, res) => {
+      const orders = req.body;
+      const result = await ordersCollection.insertOne(orders);
+      res.send(result)
+    });
+
+    app.patch('/orders/:id', async(req, res) => {
+      const id = req.params.id;
+      const updateOrder = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: updateOrder.status
+        }
+      };
+      const result = await ordersCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
+    app.delete('/orders/:id', async(req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await ordersCollection.deleteOne(query);
+      res.send(result);
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });

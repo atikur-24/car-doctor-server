@@ -58,7 +58,14 @@ async function run() {
 
     // services routes
     app.get('/services', async(req, res) => {
-        const cursor = serviceCollection.find();
+      const sort = req.query.sort;
+      const search = req.query.search;
+      // const query = { price: {$gte: 50, $lte: 200} };
+      const query =   { title: { $regex:search, $options: "i"} };
+      const options = {
+        sort: { "price": sort === 'asc' ? 1 : -1 },
+      };
+        const cursor = serviceCollection.find(query, options);
         const result = await cursor.toArray();
         res.send(result);
     });
@@ -76,7 +83,6 @@ async function run() {
     //orders route
     app.get('/orders', verifyJWT, async(req, res) => {
       const decoded = req.decoded;
-      console.log('come back after verify', decoded);
       if(decoded.email !== req.query.email) {
         return res.status(403).send({error: 1, message: 'forbidden access'})
       }
